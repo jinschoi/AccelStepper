@@ -324,10 +324,10 @@ private:
     float          _acceleration;
 
     /// The current interval between steps in milliseconds.
-    unsigned long  _stepInterval;
+    float	   _stepInterval;
 
-    /// The last step time in milliseconds
-    unsigned long  _lastStepTime;
+    /// The next scheduled step time.
+    float	   _nextStepTime;
 
     // The pointer to a forward-step procedure
     void (*_forward)();

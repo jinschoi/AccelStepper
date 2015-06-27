@@ -8,6 +8,7 @@
 void AccelStepper::moveTo(long absolute)
 {
     _targetPos = absolute;
+    _nextStepTime = millis() + _stepInterval;
     computeNewSpeed();
 }
 
@@ -22,9 +23,13 @@ void AccelStepper::move(long relative)
 boolean AccelStepper::runSpeed()
 {
     unsigned long time = millis();
-  
-    if (time > _lastStepTime + _stepInterval)
+
+    boolean took_step = false;
+
+    // Take multiple steps if necessary to catch up.
+    while (time >= _nextStepTime && _currentPos != _targetPos)
     {
+        took_step = true;
 	if (_speed > 0)
 	{
 	    // Clockwise
@@ -37,11 +42,9 @@ boolean AccelStepper::runSpeed()
 	}
 	step(_currentPos & 0x3); // Bottom 2 bits (same as mod 4, but works with + and - numbers) 
 
-	_lastStepTime = time;
-	return true;
+	_nextStepTime += _stepInterval;
     }
-    else
-	return false;
+    return took_step;
 }
 
 long AccelStepper::distanceToGo()
@@ -139,8 +142,8 @@ AccelStepper::AccelStepper(uint8_t pins, uint8_t pin1, uint8_t pin2, uint8_t pin
     _speed = 0.0;
     _maxSpeed = 1.0;
     _acceleration = 1.0;
-    _stepInterval = 0;
-    _lastStepTime = 0;
+    _stepInterval = 0.0;
+    _nextStepTime = 0.0;
     _pin1 = pin1;
     _pin2 = pin2;
     _pin3 = pin3;
@@ -156,8 +159,8 @@ AccelStepper::AccelStepper(void (*forward)(), void (*backward)())
     _speed = 0.0;
     _maxSpeed = 1.0;
     _acceleration = 1.0;
-    _stepInterval = 0;
-    _lastStepTime = 0;
+    _stepInterval = 0.0;
+    _nextStepTime = 0.0;
     _pin1 = 0;
     _pin2 = 0;
     _pin3 = 0;
@@ -182,6 +185,7 @@ void AccelStepper::setSpeed(float speed)
 {
     _speed = speed;
     _stepInterval = abs(1000.0 / _speed);
+    _nextStepTime = millis() + _stepInterval;
 }
 
 float AccelStepper::speed()
